@@ -6,3 +6,59 @@
   position: relative; /* Ensures the positioning context is correct for your header and other content */
   z-index: 1; /* Higher than the map so it appears on top */
 }
+
+.license-button {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 16px;
+  text-align: center;
+  background-color: #484848;
+  color: white;
+  cursor: pointer;
+  margin: 10px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgb(72, 72, 72);
+  transition: color 0.15s ease-in-out 0s, background-color 0.15s ease-in-out 0s, border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;
+  width: auto; /* Allow the button to adjust its width automatically */
+  max-width: 150px; /* Optional: Set a maximum width for the button */
+}
+
+.license-button:hover {
+  background-color: #313131;
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgb(72, 72, 72);
+}
+
+/* Existing styles */
+.license-container {
+
+}
+
+.license-container h1 {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.license-list {
+  border-radius: 5px;
+  list-style-type: none;
+  padding: 0;
+}
+
+.license-item {
+  padding: 5px 0;
+  border-width: 0;
+}
+
+.license-item a {
+  text-decoration: none;
+  color: #007BFF;
+  transition: color 0.2s ease-in-out;
+}
+
+.license-item a:hover {
+  color: #0056b3;
+}

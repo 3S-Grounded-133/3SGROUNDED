@@ -1,58 +1,62 @@
 import React, { useState, useEffect } from "react";
 import "./menu.css";
 
-const testSendData = [
-    { dataPoint: "", data: "", coordinates: "" },
-];
-
-const testRetrieveData = [
-    { dataPoint: "Deventer park", data: "\n" +
-            "Ground data collected in Deventer Park reveals a diverse soil composition, predominantly sandy loam with pockets of clay near the central pond. Moisture levels vary significantly, with higher readings in shaded areas, particularly under the dense canopy of oak trees. The park's topography includes gentle slopes towards the southern edge, facilitating natural drainage into the pond. Regular soil pH readings indicate slightly acidic conditions, ideal for the park's native plant species like heather and birch. Recent data highlights a need for increased irrigation in the northeastern sector, where moisture levels have consistently been low, potentially stressing the vegetation. This comprehensive ground data supports ongoing efforts to maintain the park's ecological balance and plan future landscaping projects.", coordinates: "40.7128° N, 74.0060° W" },
-    { dataPoint: "Deventer Train Station", data: "Sandy", coordinates: "34.0522° N, 118.2437° W" },
-    { dataPoint: "Zwolle University", data: "Delicious", coordinates: "51.5074° N, 0.1278° W" },
-    { dataPoint: "Saxion Deventer", data: "Speedy", coordinates: "48.8566° N, 2.3522° E" },
-    { dataPoint: "Saxion Enschede", data: "Bomarlicious", coordinates: "35.6895° N, 139.6917° E" },
-    { dataPoint: "Happy Italy", data: "Sandy", coordinates: "34.0522° N, 118.2437° W" },
-    { dataPoint: "Bagel's n Beans", data: "Delicious", coordinates: "51.5074° N, 0.1278° W" },
-    { dataPoint: "Deventer Hospital", data: "Speedy", coordinates: "48.8566° N, 2.3522° E" },
-    { dataPoint: "Gemeente Parking Garage", data: "Ground data collected for the new parking garage site reveals a foundational soil composition of compacted clay, providing a stable base for construction. Moisture levels are generally low, with some variability near the western edge due to an underground water table. The site's topography is predominantly flat, with a slight gradient towards the north to facilitate effective drainage. Soil pH measurements show neutral to slightly alkaline conditions, suitable for the planned concrete foundations and landscaping around the garage. Recent data also indicates a need for additional drainage systems in the southwestern corner to manage occasional water accumulation. This detailed ground data is essential for ensuring the structural integrity of the parking garage and guiding the design of efficient drainage and landscaping solutions.", coordinates: "35.6895° N, 139.6917° E" },
-    { dataPoint: "Habbo Hotel", data: "Sandy", coordinates: "34.0522° N, 118.2437° W" },
-    { dataPoint: "Zoo of Zoo's", data: "Delicious", coordinates: "51.5074° N, 0.1278° W" },
-    { dataPoint: "Miaw miaw park", data: "Speedy", coordinates: "48.8566° N, 2.3522° E" },
-    { dataPoint: "Doioioing Street", data: "Bomarlicious", coordinates: "35.6895° N, 139.6917° E" },
-    { dataPoint: "Visserijstraat 1", data: "Sandy", coordinates: "34.0522° N, 118.2437° W" },
-    { dataPoint: "Saxion Mental Hopital", data: "Delicious", coordinates: "51.5074° N, 0.1278° W" },
-    { dataPoint: "Cinnamon shop", data: "Speedy", coordinates: "48.8566° N, 2.3522° E" },
-    { dataPoint: "Worm City", data: "Bomarlicious", coordinates: "35.6895° N, 139.6917° E" },
-    { dataPoint: "Lobotomy Sreet", data: "Sandy", coordinates: "34.0522° N, 118.2437° W" },
-    { dataPoint: "Yowza Park", data: "Delicious", coordinates: "51.5074° N, 0.1278° W" },
-    { dataPoint: "Oil Well of Enschede", data: "Speedy", coordinates: "48.8566° N, 2.3522° E" },
-    { dataPoint: "Tony Montana Memorial", data: "Bomarlicious", coordinates: "35.6895° N, 139.6917° E" }
-];
-
 const Menu = () => {
     const [view, setView] = useState("send");
-    const [sendDataRows, setSendDataRows] = useState(testSendData);
-    const [retrieveDataRows, setRetrieveDataRows] = useState([]);
+    const [sendDataRows, setSendDataRows] = useState([{ dataPoint: "", data: "", coordinates: "" }]);
+    const [schemas, setSchemas] = useState([]);
+    const [selectedSchema, setSelectedSchema] = useState("");
+    const [tables, setTables] = useState([]);
+    const [selectedTable, setSelectedTable] = useState("");
+    const [tableData, setTableData] = useState([]);
     const [popup, setPopup] = useState(null);
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchSchemas = async () => {
             try {
-                const response = await fetch("https://api.example.com/data"); // Replace with your API endpoint
+                const response = await fetch("https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/data/schemas");
                 if (!response.ok) {
                     throw new Error("Network response was not ok");
                 }
                 const data = await response.json();
-                setRetrieveDataRows(data);
+                setSchemas(data);
             } catch (error) {
                 console.error("Fetch error:", error);
-                setRetrieveDataRows(testRetrieveData); // Fallback to sample data
             }
         };
-
-        fetchData();
+        fetchSchemas();
     }, []);
+
+    const handleSchemaChange = async (schema) => {
+        setSelectedSchema(schema);
+        setTables([]); // Reset tables when a new schema is selected
+        try {
+            const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/data/schemas/${schema}/tables`);
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            const data = await response.json();
+            setTables(data[schema]);
+        } catch (error) {
+            console.error("Fetch error:", error);
+        }
+    };
+
+    const handleTableChange = async (table) => {
+        setSelectedTable(table);
+        setTableData([]); // Reset table data when a new table is selected
+        try {
+            const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/data/schemas/${selectedSchema}/tables/${table}&limit=100`);
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            const data = await response.json();
+            console.log(data)
+            setTableData(data);
+        } catch (error) {
+            console.error("Fetch error:", error);
+        }
+    };
 
     const handleAddRow = () => {
         setSendDataRows([...sendDataRows, { dataPoint: "", data: "", coordinates: "" }]);
@@ -117,7 +121,7 @@ const Menu = () => {
                 </button>
             </div>
             <div className="content">
-            {view === "send" ? (
+                {view === "send" ? (
                     <div>
                         <table>
                             <thead>
@@ -166,13 +170,29 @@ const Menu = () => {
                             </tbody>
                         </table>
                         <div className="send-button-container">
-                            <button className="send-button">Send</button>
+                            <button className="send-button" onClick={handleSend}>Send</button>
                         </div>
                     </div>
-            ) : (
-                <div>
-                <ul>
-                            {retrieveDataRows.map((row, index) => (
+                ) : (
+                    <div>
+                        <div>
+                            <select value={selectedSchema} onChange={(e) => handleSchemaChange(e.target.value)}>
+                                <option value="" disabled>Select Schema</option>
+                                {schemas.map((schema) => (
+                                    <option key={schema} value={schema}>{schema}</option>
+                                ))}
+                            </select>
+                            {selectedSchema && tables.length > 0 && (
+                                <select value={selectedTable} onChange={(e) => handleTableChange(e.target.value)}>
+                                    <option value="" disabled>Select Table</option>
+                                    {tables.map((table) => (
+                                        <option key={table} value={table}>{table}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+                        <ul>
+                            {tableData.map((row, index) => (
                                 <li
                                     key={index}
                                     onClick={() => handleDataPointClick(row)}

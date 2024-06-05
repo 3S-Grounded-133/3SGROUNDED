@@ -3,7 +3,7 @@ import './header.css';
 import LayerDropdown from "./layerdropdown";
 import aerius from '../images/aerius-calculator.png'; // Adjust the path as necessary
 
-const Header = () => {
+const Header = ({ toggleModal }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
@@ -26,10 +26,8 @@ const Header = () => {
         });
 
         if (response.ok) {
-            // Handle successful login
             console.log('Login successful');
         } else {
-            // Handle error
             console.log('Login failed');
         }
         setUsername('');
@@ -46,10 +44,8 @@ const Header = () => {
         });
 
         if (response.ok) {
-            // Handle successful registration
             console.log('Registration successful');
         } else {
-            // Handle error
             console.log('Registration failed');
         }
         setUsername('');
@@ -88,6 +84,7 @@ const Header = () => {
                 <h1>GRND133</h1>
             </div>
             <div className="header-section-right">
+                <button onClick={toggleModal} className="license-button">Licenses</button>
                 <a href="https://calculator.aerius.nl/wnb/" target="_blank" rel="noopener noreferrer">
                     <img src={aerius} alt="Aerius Calculator" className="header-image"/>
                 </a>

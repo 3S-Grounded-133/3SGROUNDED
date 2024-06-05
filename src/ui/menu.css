@@ -101,13 +101,19 @@ input {
     text-align: center;
     background-color: #484848;
     color: white;
-    border: none;
     cursor: pointer;
     margin: 0;
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgb(72, 72, 72);
+    transition: color 0.15s ease-in-out 0s, background-color 0.15s ease-in-out 0s, border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;
 }
 
 .header-button:hover {
     background-color: #313131;
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgb(72, 72, 72);
 }
 
 .send-button-container {
