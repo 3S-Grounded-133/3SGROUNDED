@@ -1,0 +1,25 @@
+.map-container {
+    width: 100%;     /* Take full width of its parent */
+    height: 50rem;   /* Take full height of the viewport, adjust as needed */
+    position: relative; /* Positioning context for the map */
+}
+.top-bar {
+    background-color: #f8f9fa;
+    padding: 10px;
+    display: flex;
+    justify-content: space-around;
+}
+
+.top-bar button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+.top-bar button:hover {
+    background-color: #0056b3;
+}

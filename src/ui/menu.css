@@ -1,6 +1,132 @@
-
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
 
 .background {
-    background-color: #eeeeee;
+    display: flex;
+    flex-direction: column;
+    height: 50rem;
+    background-color: #EEEEEE;
+}
+
+.menu-header {
+    display: flex;
+    width: 100%;
+    background-color: #333;
+    padding: 10px;
+    text-align: center;
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 5px;
+    display: flex;
+    justify-content: center;
+}
+
+table {
+    width: 80%;
+    margin: 0 auto;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 4px;
+}
+
+td {
+    background-color: #f2f2f2;
+}
+
+th {
+    background-color: #ffffff;
+}
+
+button {
+    margin: 0px;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    cursor: pointer;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+.popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px;
+    background-color: white;
+    border: 1px solid #ddd;
+    z-index: 1000;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
     height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+input {
+    box-shadow: none;
+    border: none;
+}
+
+.button-container {
+    display: flex;
+    width: 100%;
+}
+
+.header-button {
+    flex: 1;
+    padding: 10px 0;
+    font-size: 16px;
+    text-align: center;
+    background-color: #484848;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin: 0;
+}
+
+.header-button:hover {
+    background-color: #313131;
+}
+
+.send-button-container {
+    display: flex;
+    justify-content: end;
+}
+
+.send-button {
+    flex: 1;
+    padding: 10px 0;
+    font-size: 16px;
+    text-align: center;
+    background-color: #f2f2f2;
+    color: black;
+    border: none;
+    cursor: pointer;
+    margin: 0;
+}
+
+.send-button:hover {
+    background-color: #e2e2e2;
 }
