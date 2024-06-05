@@ -14,12 +14,13 @@ const Menu = () => {
     useEffect(() => {
         const fetchSchemas = async () => {
             try {
-                const response = await fetch("https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/data/schemas");
+                const response = await fetch("https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/schemas");
                 if (!response.ok) {
                     throw new Error("Network response was not ok");
                 }
                 const data = await response.json();
-                setSchemas(data);
+                console.log()
+                setSchemas(data["schemas"]);
             } catch (error) {
                 console.error("Fetch error:", error);
             }
@@ -31,12 +32,13 @@ const Menu = () => {
         setSelectedSchema(schema);
         setTables([]); // Reset tables when a new schema is selected
         try {
-            const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/data/schemas/${schema}/tables`);
+            const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/schemas/${schema}/tables`);
             if (!response.ok) {
                 throw new Error("Network response was not ok");
             }
             const data = await response.json();
-            setTables(data[schema]);
+            console.log(data)
+            setTables(data["tables"]);
         } catch (error) {
             console.error("Fetch error:", error);
         }
@@ -46,13 +48,13 @@ const Menu = () => {
         setSelectedTable(table);
         setTableData([]); // Reset table data when a new table is selected
         try {
-            const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/data/schemas/${selectedSchema}/tables/${table}&limit=100`);
+            const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/schemas/${selectedSchema}/tables/${table}/data?&limit=100`);
             if (!response.ok) {
                 throw new Error("Network response was not ok");
             }
             const data = await response.json();
             console.log(data)
-            setTableData(data);
+            setTableData(data["data"]);
         } catch (error) {
             console.error("Fetch error:", error);
         }
