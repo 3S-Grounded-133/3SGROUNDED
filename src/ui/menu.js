@@ -10,6 +10,7 @@ const Menu = () => {
     const [selectedTable, setSelectedTable] = useState("");
     const [tableData, setTableData] = useState([]);
     const [popup, setPopup] = useState(null);
+    const [columns, setColumns] = useState([]);
 
     useEffect(() => {
         const fetchSchemas = async () => {
@@ -19,7 +20,6 @@ const Menu = () => {
                     throw new Error("Network response was not ok");
                 }
                 const data = await response.json();
-                console.log()
                 setSchemas(data["schemas"]);
             } catch (error) {
                 console.error("Fetch error:", error);
@@ -37,7 +37,6 @@ const Menu = () => {
                 throw new Error("Network response was not ok");
             }
             const data = await response.json();
-            console.log(data)
             setTables(data["tables"]);
         } catch (error) {
             console.error("Fetch error:", error);
@@ -53,8 +52,12 @@ const Menu = () => {
                 throw new Error("Network response was not ok");
             }
             const data = await response.json();
-            console.log(data)
             setTableData(data["data"]);
+
+            // Extract column names
+            if (data["data"].length > 0) {
+                setColumns(Object.keys(data["data"][0]));
+            }
         } catch (error) {
             console.error("Fetch error:", error);
         }
@@ -78,13 +81,14 @@ const Menu = () => {
 
     const handleSend = async () => {
         for (const row of sendDataRows) {
-            const payload = {
-                dataPoint: row.dataPoint,
-                data: row.data,
-                coordinates: row.coordinates
-            };
+            const payload = {};
+            columns.forEach(column => {
+                payload[column] = sendDataRows[0][column] || "";
+            });
+            console.log(payload);
             try {
-                const response = await fetch("https://api.example.com/send", { // Replace with your API endpoint
+                const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/schemas/${selectedSchema}/tables/${selectedTable}/data
+`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -104,8 +108,8 @@ const Menu = () => {
     };
 
     const handleDataPointClick = (row) => {
-        console.log("Data point clicked:", row.dataPoint);
-        setPopup({ dataPoint: row.dataPoint, data: row.data, coordinates: row.coordinates });
+        console.log("Data point clicked:", row);
+        setPopup(row);
     };
 
     const closePopup = () => {
@@ -122,92 +126,59 @@ const Menu = () => {
                     Retrieve
                 </button>
             </div>
+            <div className="dropdown-container">
+                <div className="dropdown-wrapper">
+                    <select className="dropdown" value={selectedSchema} onChange={(e) => handleSchemaChange(e.target.value)}>
+                        <option value="" disabled>Select Schema</option>
+                        {schemas.map((schema) => (
+                            <option key={schema} value={schema}>{schema}</option>
+                        ))}
+                    </select>
+                    {selectedSchema && tables.length > 0 && (
+                        <select className="dropdown" value={selectedTable} onChange={(e) => handleTableChange(e.target.value)}>
+                            <option value="" disabled>Select Table</option>
+                            {tables.map((table) => (
+                                <option key={table} value={table}>{table}</option>
+                            ))}
+                        </select>
+                    )}
+                </div>
+            </div>
             <div className="content">
                 {view === "send" ? (
                     <div>
-                        <table>
-                            <thead>
-                            <tr>
-                                <th>Data point</th>
-                                <th>Data</th>
-                                <th>Coordinates</th>
-                                <th>Actions</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {sendDataRows.map((row, index) => (
-                                <tr key={index}>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            placeholder={"Deventer"}
-                                            value={row.dataPoint}
-                                            onChange={(e) => handleChange(index, "dataPoint", e.target.value)}
-                                        />
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            placeholder={"Dark soil"}
-                                            value={row.data}
-                                            onChange={(e) => handleChange(index, "data", e.target.value)}
-                                        />
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            placeholder={"40.7128° N, 74.0060° W"}
-                                            value={row.coordinates}
-                                            onChange={(e) => handleChange(index, "coordinates", e.target.value)}
-                                        />
-                                    </td>
-                                    <td>
-                                        <button onClick={() => handleAddRow()}>+</button>
-                                        {sendDataRows.length > 1 && (
-                                            <button onClick={() => handleRemoveRow(index)}>-</button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
+                        {columns.map((column, index) => (
+                            <div key={index} className="field-container">
+                                <label>{column}</label>
+                                <input
+                                    type="text"
+                                    placeholder={`Field ${index + 1}`}
+                                    value={sendDataRows[0][column] || ""}
+                                    onChange={(e) => handleChange(0, column, e.target.value)}
+                                />
+                            </div>
+                        ))}
                         <div className="send-button-container">
                             <button className="send-button" onClick={handleSend}>Send</button>
                         </div>
                     </div>
                 ) : (
                     <div>
-                        <div>
-                            <select value={selectedSchema} onChange={(e) => handleSchemaChange(e.target.value)}>
-                                <option value="" disabled>Select Schema</option>
-                                {schemas.map((schema) => (
-                                    <option key={schema} value={schema}>{schema}</option>
-                                ))}
-                            </select>
-                            {selectedSchema && tables.length > 0 && (
-                                <select value={selectedTable} onChange={(e) => handleTableChange(e.target.value)}>
-                                    <option value="" disabled>Select Table</option>
-                                    {tables.map((table) => (
-                                        <option key={table} value={table}>{table}</option>
-                                    ))}
-                                </select>
-                            )}
-                        </div>
                         <ul>
                             {tableData.map((row, index) => (
                                 <li
                                     key={index}
                                     onClick={() => handleDataPointClick(row)}
                                 >
-                                    {row.dataPoint} {row.coordinates && `(${row.coordinates})`}
+                                    Field {index} {row.coordinates && `(${row.coordinates})`}
                                 </li>
                             ))}
                         </ul>
                         {popup && (
                             <div className="popup">
-                                <p>Data Point: {popup.dataPoint}</p>
-                                <p>Data: {popup.data}</p>
-                                <p>Coordinates: {popup.coordinates}</p>
+                                {Object.keys(popup).map((key) => (
+                                    <p key={key}>{key}: {popup[key]}</p>
+                                ))}
                                 <button onClick={closePopup}>Close</button>
                             </div>
                         )}
