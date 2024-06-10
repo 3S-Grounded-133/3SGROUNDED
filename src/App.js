@@ -1,14 +1,19 @@
+// Import necessary React hooks and styles
 import React, { useState } from 'react';
 import './App.css';
 
+// Import UI components
 import Header from './ui/header.js';
 import Menu from "./ui/menu.js";
 import ArcgisMap from "./map/arcgis-map";
 import Modal from './ui/Modal.js';
 
+// Define the main App component
 function App() {
+    // State to manage the visibility of the modal
     const [showModal, setShowModal] = useState(false);
 
+    // List of licenses with titles and URLs
     const licenses = [
         { title: 'CC BY 4.0 - IMBOR', URL: 'https://creativecommons.org/licenses/by/4.0/deed.nl' },
         { title: 'CC0 / CC Zero - GWSW', URL: 'https://creativecommons.org/share-your-work/cclicenses/' },
@@ -33,12 +38,15 @@ function App() {
         { title: 'Provincie Overijssel Geo Viewer', URL: 'https://geo.overijssel.nl/viewer/app/master/v1' }
     ];
 
+    // Function to toggle the modal visibility
     const toggleModal = () => {
         setShowModal(!showModal);
     };
 
+    // Render the main structure of the app
     return (
         <div>
+            {/* Header component with a toggle modal function */}
             <Header toggleModal={toggleModal} style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -48,11 +56,13 @@ function App() {
                 marginBottom: '1rem'
             }} />
 
+            {/* Main content section with a map and a menu */}
             <main style={{ display: 'flex', flexDirection: 'row', margin: '50px' }}>
                 <div style={{
                     flex: '2',
                     marginRight: '1rem'
                 }}>
+                    {/* ArcGIS Map component with styles */}
                     <ArcgisMap style={{
                         width: '100%',
                         height: '400px', // Adjust height as needed
@@ -65,10 +75,12 @@ function App() {
                     display: 'flex',
                     flexDirection: 'column'
                 }}>
+                    {/* Menu component */}
                     <Menu />
                 </div>
             </main>
 
+            {/* Modal component for displaying licenses */}
             <Modal show={showModal} onClose={toggleModal}>
                 <div className="license-container" style={{ maxHeight: '400px', overflowY: 'scroll' }}>
                     <h1>Licenses</h1>
