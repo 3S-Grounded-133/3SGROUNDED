@@ -1,5 +1,5 @@
 // Import necessary React hooks and styles
-import React, { useState } from 'react';
+import React, {useContext, useState} from 'react';
 import './header.css';
 
 // Import other components and images
@@ -7,7 +7,7 @@ import LayerDropdown from "./layerdropdown";
 import aerius from '../images/aerius-calculator.png'; // Adjust the path as necessary
 
 // Define the Header component
-const Header = ({ toggleModal }) => {
+const Header = ({ toggleModal, token, updateToken }) => {
     // State variables for username and password
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -24,18 +24,36 @@ const Header = ({ toggleModal }) => {
 
     // Handle login button click event
     const handleLogin = async () => {
+        let loginDetails = {
+            'username': username,
+            'password': password,
+        }
+
+        const requestBody = new URLSearchParams();
+
+        // Add each key-value pair to the URLSearchParams object
+        for (const [key, value] of Object.entries(loginDetails)) {
+            requestBody.append(key, value);
+        }
+
         // Make a POST request to the login endpoint
-        const response = await fetch('YOUR_API_ENDPOINT/login', {
+        const response = (await fetch('https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/auth/login', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: JSON.stringify({ username, password }),
-        });
+            body: requestBody,
+        }));
+
+        const responseBody = await response.json();
 
         // Check the response and log the result
         if (response.ok) {
             console.log('Login successful');
+            console.log(responseBody);
+            console.log("access_token " + responseBody.access_token);
+            updateToken(responseBody.access_token);
+            console.log(token);
         } else {
             console.log('Login failed');
         }
@@ -46,13 +64,23 @@ const Header = ({ toggleModal }) => {
 
     // Handle register button click event
     const handleRegister = async () => {
+        // placeholder values to omit the registration form
+        let registrationDetails = {
+            'email': username,
+            'password': password,
+            'first_name': "First Name",
+            'last_name': "Last Name",
+            'phone_number': "0123456789",
+        }
+
         // Make a POST request to the register endpoint
-        const response = await fetch('YOUR_API_ENDPOINT/register', {
+        const response = await fetch('https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/auth/signup', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ username, password }),
+
+            body: JSON.stringify(registrationDetails),
         });
 
         // Check the response and log the result
@@ -60,6 +88,7 @@ const Header = ({ toggleModal }) => {
             console.log('Registration successful');
         } else {
             console.log('Registration failed');
+            console.log(response);
         }
         // Reset username and password fields
         setUsername('');

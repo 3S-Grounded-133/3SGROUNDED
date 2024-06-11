@@ -1,5 +1,5 @@
 // Import necessary React hooks and styles
-import React, { useState } from 'react';
+import React, {useContext, useState} from 'react';
 import './App.css';
 
 // Import UI components
@@ -12,6 +12,9 @@ import Modal from './ui/Modal.js';
 function App() {
     // State to manage the visibility of the modal
     const [showModal, setShowModal] = useState(false);
+
+    // shared token state of Header & Menu, lifted here.
+    const [token, setToken] = useState('');
 
     // List of licenses with titles and URLs
     const licenses = [
@@ -43,6 +46,11 @@ function App() {
         setShowModal(!showModal);
     };
 
+    // Function to update token
+    const updateToken = (newToken) => {
+        setToken(newToken);
+    };
+
     // Render the main structure of the app
     return (
         <div>
@@ -54,7 +62,7 @@ function App() {
                 padding: '1rem',
                 borderBottom: '2px solid #000',
                 marginBottom: '1rem'
-            }} />
+            }} token={token} updateToken={updateToken}/>
 
             {/* Main content section with a map and a menu */}
             <main style={{ display: 'flex', flexDirection: 'row', margin: '50px' }}>
@@ -93,7 +101,7 @@ function App() {
                             </li>
                         ))}
                     </ul>
-                </div>
+                </div> token={token} updateToken={updateToken}
             </Modal>
         </div>
     );
