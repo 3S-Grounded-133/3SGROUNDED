@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import "./menu.css";
 
 // Define the Menu component
-const Menu = () => {
+const Menu = ({token, updateToken, getToken}) => {
     // State variables for managing views, data, and selection
     const [view, setView] = useState("send");
     const [sendDataRows, setSendDataRows] = useState([{ dataPoint: "", data: "", coordinates: "" }]);
@@ -17,27 +17,69 @@ const Menu = () => {
 
     // Fetch schemas when the component mounts
     useEffect(() => {
-        const fetchSchemas = async () => {
-            try {
-                const response = await fetch("https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/schemas");
-                if (!response.ok) {
-                    throw new Error("Network response was not ok");
-                }
-                const data = await response.json();
-                setSchemas(data["schemas"]);
-            } catch (error) {
-                console.error("Fetch error:", error);
-            }
-        };
-        fetchSchemas();
+        fetchPublicSchemas();
     }, []);
+
+    // Fetch the own data schema when the user is logged in & remove the schema when the user is logged out
+
+    useEffect(() => {
+        console.log("token changed. Value is: " + token);
+        if (token) {
+            setSchemas(schemas => [...schemas, "Own data"]);
+        } else {
+            fetchPublicSchemas();
+        }
+    }, [token]);
+
+    const fetchPublicSchemas = async () => {
+        try {
+            const response = await fetch("https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/schemas");
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            const data = await response.json();
+            setSchemas(data["schemas"]);
+
+        } catch (error) {
+            console.error("Fetch error:", error);
+        }
+    };
+
+    // Fetch tables owned by the user
+    const fetchOwnTables = async () => {
+        setSelectedSchema("Own data");
+        setTables([]);
+        try {
+            const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/user-data/tables`);
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            const data = await response.json();
+            setTables(data["tables"]);
+        } catch (error) {
+            console.error("Fetch error:", error);
+        }
+    }
 
     // Handle schema change and fetch tables for the selected schema
     const handleSchemaChange = async (schema) => {
         setSelectedSchema(schema);
+        console.log("New schema detected: " + schema);
         setTables([]); // Reset tables when a new schema is selected
         try {
-            const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/schemas/${schema}/tables`);
+            let response;
+            if (schema !== "Own data") {
+                response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/schemas/${schema}/tables`);
+            } else {
+                response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/user-data/tables`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token,
+                    },
+                });
+            }
+
             if (!response.ok) {
                 throw new Error("Network response was not ok");
             }
@@ -52,8 +94,22 @@ const Menu = () => {
     const handleTableChange = async (table) => {
         setSelectedTable(table);
         setTableData([]); // Reset table data when a new table is selected
+
         try {
-            const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/schemas/${selectedSchema}/tables/${table}/data?&limit=100`);
+            let response;
+            if (selectedSchema !== "Own data") {
+                response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/schemas/${selectedSchema}/tables/${table}/data?&limit=100`);
+            } else {
+                response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/user-data/tables/${table}/&limit=100`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token,
+                    },
+                });
+
+                console.log("Token to get own data: " + token);
+            }
             if (!response.ok) {
                 throw new Error("Network response was not ok");
             }
@@ -68,6 +124,8 @@ const Menu = () => {
             console.error("Fetch error:", error);
         }
     };
+
+
 
     // Handle adding a new row to the send data
     const handleAddRow = () => {
@@ -173,7 +231,7 @@ const Menu = () => {
                             </div>
                         ))}
                         <div className="send-button-container">
-                            <button className="send-button" onClick={handleSend}>Send</button>
+                            {selectedSchema.startsWith('user_own_data') && <button className="send-button" onClick={handleSend}>Send</button>}
                         </div>
                     </div>
                 ) : (
