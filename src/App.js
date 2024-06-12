@@ -47,9 +47,18 @@ function App() {
     };
 
     // Function to update token
-    const updateToken = (newToken) => {
-        setToken(newToken);
-    };
+    // STATE VALUES WILL ALWAYS LAG BY 1 STATE
+    function updateToken (newToken) {
+        //console.log('updateToken called with value: ' + newToken); // test
+        setToken(token => newToken);
+        //console.log('token value in App is: ' + token);
+    }
+
+    function getToken() {
+        return token;
+    }
+
+    //updateToken('firstRender');
 
     // Render the main structure of the app
     return (
@@ -84,7 +93,7 @@ function App() {
                     flexDirection: 'column'
                 }}>
                     {/* Menu component */}
-                    <Menu />
+                    <Menu token={token} updateToken={updateToken}/>
                 </div>
             </main>
 
@@ -101,7 +110,7 @@ function App() {
                             </li>
                         ))}
                     </ul>
-                </div> token={token} updateToken={updateToken}
+                </div>
             </Modal>
         </div>
     );

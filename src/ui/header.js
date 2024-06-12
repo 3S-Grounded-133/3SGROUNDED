@@ -11,19 +11,24 @@ const Header = ({ toggleModal, token, updateToken }) => {
     // State variables for username and password
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [loggedInUsername, setLoggedInUsername] = useState('');
+
 
     // Handle input change event
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         if (name === 'username') {
             setUsername(value);
+            setLoggedInUsername(value);
         } else if (name === 'password') {
             setPassword(value);
         }
     };
 
     // Handle login button click event
-    const handleLogin = async () => {
+    async function handleLogin(e) {
+        //e.preventDefault();
+
         let loginDetails = {
             'username': username,
             'password': password,
@@ -52,15 +57,21 @@ const Header = ({ toggleModal, token, updateToken }) => {
             console.log('Login successful');
             console.log(responseBody);
             console.log("access_token " + responseBody.access_token);
-            updateToken(responseBody.access_token);
-            console.log(token);
+            const newToken = responseBody.access_token;
+            await updateToken('');
+            await updateToken(newToken);
+
+            //await new Promise(r => setTimeout(r, 1000));
+            console.log('Token after update in handleLogin is: ' + token);
+
         } else {
             console.log('Login failed');
+            setLoggedInUsername('');
         }
         // Reset username and password fields
         setUsername('');
         setPassword('');
-    };
+    }
 
     // Handle register button click event
     const handleRegister = async () => {
@@ -95,39 +106,53 @@ const Header = ({ toggleModal, token, updateToken }) => {
         setPassword('');
     };
 
+    const handleLogout = async () => {
+        updateToken('');
+        setLoggedInUsername('');
+    }
+
     // Render the Header component
     return (
         <div className="header">
-            <div className="header-section-left">
-                {/* Username input field */}
-                <input
-                    className="header-input"
-                    type="text"
-                    placeholder="Username"
-                    name="username"
-                    value={username}
-                    onChange={handleInputChange}
-                    aria-label="Username"
-                />
-                {/* Password input field */}
-                <input
-                    className="header-input"
-                    type="password"
-                    placeholder="Password"
-                    name="password"
-                    value={password}
-                    onChange={handleInputChange}
-                    aria-label="Password"
-                />
-                {/* Login button */}
-                <button className="button" type="button" onClick={handleLogin}>
-                    Log In
-                </button>
-                {/* Register button */}
-                <button className="button" type="button" onClick={handleRegister}>
-                    Register
-                </button>
-            </div>
+            {token === '' ? (
+                <div className="header-section-left">
+                    {/* Username input field */}
+                    <input
+                        className="header-input"
+                        type="text"
+                        placeholder="Username"
+                        name="username"
+                        value={username}
+                        onChange={handleInputChange}
+                        aria-label="Username"
+                    />
+                    {/* Password input field */}
+                    <input
+                        className="header-input"
+                        type="password"
+                        placeholder="Password"
+                        name="password"
+                        value={password}
+                        onChange={handleInputChange}
+                        aria-label="Password"
+                    />
+                    {/* Login button */}
+                    <button className="button" type="button" onClick={handleLogin}>
+                        Log In
+                    </button>
+                    {/* Register button */}
+                    <button className="button" type="button" onClick={handleRegister}>
+                        Register
+                    </button>
+                </div>
+            ) : (
+                <div className="header-section-left">
+                    <h3>Welcome, {loggedInUsername}</h3>
+                    <button className="button" type="button" onClick={handleLogout}>
+                        Logout
+                    </button>
+                </div>
+            )}
             <div className="header-section-center">
                 <h1>GRND133</h1>
             </div>
