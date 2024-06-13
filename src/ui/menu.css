@@ -96,7 +96,7 @@ input {
     width: 100%;
 }
 
-.header-button {
+.header-button, .send-button, .table-list-button {
     flex: 1;
     padding: 10px 0;
     font-size: 16px;
@@ -121,21 +121,6 @@ input {
 .send-button-container {
     display: flex;
     justify-content: end;
-}
-
-.send-button {
-    flex: 1;
-    padding: 10px 0;
-    font-size: 16px;
-    text-align: center;
-    background-color: #484848;
-    color: white;
-    cursor: pointer;
-    margin: 0;
-    border-width: 1px;
-    border-style: solid;
-    border-color: rgb(72, 72, 72);
-    transition: color 0.15s ease-in-out 0s, background-color 0.15s ease-in-out 0s, border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;
 }
 
 .send-button:hover {

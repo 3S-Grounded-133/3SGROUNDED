@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import "./menu.css";
 import {getValue} from "@testing-library/user-event/dist/utils";
+import Modal from "./Modal";
 
 // Define the Menu component
 const Menu = ({token, updateToken, getToken}) => {
@@ -16,6 +17,14 @@ const Menu = ({token, updateToken, getToken}) => {
     const [popup, setPopup] = useState(null);
     const [columns, setColumns] = useState([]);
 
+    // form values to create/delete new table
+    const [createTableName, setCreateTableName] = useState('');
+    const [deleteTableName, setDeleteTableName] = useState('');
+
+    // modal toggle values
+    const [showCreateTableModal, setShowCreateTableModal] = useState(false);
+    const [showDeleteTableModal, setShowDeleteTableModal] = useState(false);
+
     // Fetch schemas when the component mounts
     useEffect(() => {
         fetchPublicSchemas();
@@ -27,10 +36,11 @@ const Menu = ({token, updateToken, getToken}) => {
         console.log("token changed. Value is: " + token);
         if (token) {
             setSchemas(schemas => [...schemas, "Own data"]);
-            setView("retrieve");
         } else {
             fetchPublicSchemas();
         }
+
+        setView("retrieve");
     }, [token]);
 
     const fetchPublicSchemas = async () => {
@@ -41,6 +51,8 @@ const Menu = ({token, updateToken, getToken}) => {
             }
             const data = await response.json();
             setSchemas(data["schemas"]);
+            setTables([]);
+            setTableData([]); // cleanup the old content
 
         } catch (error) {
             console.error("Fetch error:", error);
@@ -128,7 +140,7 @@ const Menu = ({token, updateToken, getToken}) => {
         }
     };
 
-    // Handle table selection: fetch data for the selected table
+    // Handle table selection: fetch data for the selected table (only when in 'retrieve' view)
     const handleTableSelection = async (table) => {
         // Pass on default value
         if (!table) {
@@ -138,33 +150,35 @@ const Menu = ({token, updateToken, getToken}) => {
         setSelectedTable(table);
         setTableData([]); // Reset table data when a new table is selected
 
-        try {
-            let response;
-            if (selectedSchema !== "Own data") {
-                response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/schemas/${selectedSchema}/tables/${table}/data?&limit=100`);
-            } else {
-                response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/user-data/tables/${table}?&limit=100`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token,
-                    },
-                });
+        if (view === 'retrieve') {
+            try {
+                let response;
+                if (selectedSchema !== "Own data") {
+                    response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/schemas/${selectedSchema}/tables/${table}/data?&limit=100`);
+                } else {
+                    response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/user-data/tables/${table}?&limit=100`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token,
+                        },
+                    });
 
-                console.log("Token to get own data: " + token);
-            }
-            if (!response.ok) {
-                throw new Error("Network response was not ok");
-            }
-            const data = await response.json();
-            setTableData(data["data"]);
+                    console.log("Token to get own data: " + token);
+                }
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                const data = await response.json();
+                setTableData(data["data"]);
 
-            // Extract column names
-            if (data["data"].length > 0) {
-                setColumns(Object.keys(data["data"][0]));
+                // Extract column names
+                if (data["data"].length > 0) {
+                    setColumns(Object.keys(data["data"][0]));
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
             }
-        } catch (error) {
-            console.error("Fetch error:", error);
         }
     };
 
@@ -188,6 +202,14 @@ const Menu = ({token, updateToken, getToken}) => {
         rows[index][field] = value;
         setSendDataRows(rows);
     };
+
+    const handleCreateTableChange = (e) => {
+        setCreateTableName(e.target.value);
+    }
+
+    const handleDeleteTableChange = (e) => {
+        setDeleteTableName(e.target.value);
+    }
 
     // Handle sending (user-owned) data to the API
     const handleSend = async () => {
@@ -217,6 +239,66 @@ const Menu = ({token, updateToken, getToken}) => {
         }
         setSendDataRows([{ dataPoint: "", data: "", coordinates: "" }]);
     };
+
+    async function handleCreateTable(e) {
+        // TODO
+        e.preventDefault();
+
+        console.log("Table to be created is: " + createTableName);
+
+        const body = {
+            "table_name": createTableName,
+            "columns": {"data_point": "String", "data": "String", "coordinates": "String"},
+            "primary_key": "data_point",
+        }
+
+        try {
+            const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/user-data/tables`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+
+            // re-fetch the new table list
+            await fetchOwnTables();
+        } catch (error) {
+            console.error("Fetch error:", error);
+        }
+
+        setShowCreateTableModal(false);
+    }
+
+    async function handleDeleteTable(e) {
+        e.preventDefault();
+
+        try {
+            const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/user-data/tables/${deleteTableName}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+
+            // re-fetch the new table list
+            await fetchOwnTables();
+        } catch (error) {
+            console.error("Fetch error:", error);
+        }
+
+        setShowDeleteTableModal(false);
+    }
 
     // Handle data point click event to show popup
     const handleDataPointClick = (row) => {
@@ -269,12 +351,21 @@ const Menu = ({token, updateToken, getToken}) => {
                         </select>
                     )}
                 </div>
+
+                {/* Buttons to create/delete (owned) table */}
+                <div className="send-button-container">
+                    {selectedSchema === "Own data" &&
+                        <button className="table-list-button" onClick={() => {setShowCreateTableModal(true)}}>New table...</button>}
+                    {selectedSchema === "Own data" &&
+                        <button className="table-list-button" onClick={() => setShowDeleteTableModal(true)}>Delete table...</button>}
+                </div>
             </div>
+
             <div className="content">
                 {view === "send" ? (
                     token === "" ? (
-                            <h2>Please log in to store own data</h2>
-                        ) : (
+                        <h2>Please log in to store own data</h2>
+                    ) : (
                         <div>
                             {/* Input fields for sending data */}
                             {columns.map((column, index) => (
@@ -318,6 +409,34 @@ const Menu = ({token, updateToken, getToken}) => {
                     </div>
                 )}
             </div>
+
+            {/* Create/delete table modals */}
+            <Modal show={showCreateTableModal} onClose={() => setShowCreateTableModal(false)}>
+                <form onSubmit={handleCreateTable}>
+                    <label>
+                        Name:
+                        <input onChange={handleCreateTableChange} required type="text"/>
+                    </label>
+                    {createTableName && <button type="submit" value="Submit" className="send-button">Submit</button>}
+                </form>
+            </Modal>
+
+            <Modal show={showDeleteTableModal} onClose={() => setShowDeleteTableModal(false)}>
+                <form onSubmit={handleDeleteTable}>
+                    <label>
+                        Name:
+                        <select className="dropdown" id="table-selection-dropdown" value={deleteTableName}
+                                onChange={handleDeleteTableChange}>
+                            <option value="">Select Table...</option>
+                            {tables.map((table) => (
+                                <option key={table} value={table}>{table}</option>
+                            ))}
+                        </select>
+                    </label>
+                    {deleteTableName && <button type="submit" value="Submit" className="send-button">Submit</button>}
+                </form>
+            </Modal>
+
         </div>
     );
 }
