@@ -1,6 +1,7 @@
 // Import necessary React hooks and styles
 import React, { useState, useEffect } from "react";
 import "./menu.css";
+import {getValue} from "@testing-library/user-event/dist/utils";
 
 // Define the Menu component
 const Menu = ({token, updateToken, getToken}) => {
@@ -26,6 +27,7 @@ const Menu = ({token, updateToken, getToken}) => {
         console.log("token changed. Value is: " + token);
         if (token) {
             setSchemas(schemas => [...schemas, "Own data"]);
+            setView("retrieve");
         } else {
             fetchPublicSchemas();
         }
@@ -47,10 +49,19 @@ const Menu = ({token, updateToken, getToken}) => {
 
     // Fetch tables owned by the user
     const fetchOwnTables = async () => {
+        setSchemas(["Own data"]);
         setSelectedSchema("Own data");
         setTables([]);
+        setSelectedTable("");
         try {
-            const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/user-data/tables`);
+            const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/user-data/tables`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                },
+            });
+
             if (!response.ok) {
                 throw new Error("Network response was not ok");
             }
@@ -61,8 +72,35 @@ const Menu = ({token, updateToken, getToken}) => {
         }
     }
 
+    const handleViewChange = async (view) => {
+        // cleanup values on view change from a public view-only schema.
+        setSchemas([]);
+        setTables([]);
+        setSelectedSchema("");
+        setSelectedTable("");
+        setTableData([]);
+
+        setView(view);
+
+        if (view === "send") {
+            if (token) {
+                await fetchOwnTables();
+            }
+        } else {
+            await fetchPublicSchemas();
+            if (token) {
+            setSchemas(schemas => [...schemas, "Own data"]);
+            }
+        }
+    }
+
     // Handle schema change and fetch tables for the selected schema
     const handleSchemaChange = async (schema) => {
+        /* Pass on default value */
+        if (!schema) {
+            return;
+        }
+
         setSelectedSchema(schema);
         console.log("New schema detected: " + schema);
         setTables([]); // Reset tables when a new schema is selected
@@ -90,8 +128,13 @@ const Menu = ({token, updateToken, getToken}) => {
         }
     };
 
-    // Handle table change and fetch data for the selected table
-    const handleTableChange = async (table) => {
+    // Handle table selection: fetch data for the selected table
+    const handleTableSelection = async (table) => {
+        // Pass on default value
+        if (!table) {
+            return;
+        }
+
         setSelectedTable(table);
         setTableData([]); // Reset table data when a new table is selected
 
@@ -100,7 +143,7 @@ const Menu = ({token, updateToken, getToken}) => {
             if (selectedSchema !== "Own data") {
                 response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/schemas/${selectedSchema}/tables/${table}/data?&limit=100`);
             } else {
-                response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/user-data/tables/${table}/&limit=100`, {
+                response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/user-data/tables/${table}?&limit=100`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -146,7 +189,7 @@ const Menu = ({token, updateToken, getToken}) => {
         setSendDataRows(rows);
     };
 
-    // Handle sending data to the API
+    // Handle sending (user-owned) data to the API
     const handleSend = async () => {
         for (const row of sendDataRows) {
             const payload = {};
@@ -155,10 +198,12 @@ const Menu = ({token, updateToken, getToken}) => {
             });
             console.log(payload);
             try {
-                const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/schemas/${selectedSchema}/tables/${selectedTable}/data`, {
+                const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/user-data/tables/${selectedTable}/data`, {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token,
+
                     },
                     body: JSON.stringify(payload)
                 });
@@ -188,26 +233,36 @@ const Menu = ({token, updateToken, getToken}) => {
     return (
         <div className="background">
             <div className="menu-header">
-                <button className="header-button" onClick={() => setView("send")}>
+                <button className="header-button" onClick={() => handleViewChange("send")}>
                     Send
                 </button>
-                <button className="header-button" onClick={() => setView("retrieve")}>
+                <button className="header-button" onClick={() => handleViewChange("retrieve")}>
                     Retrieve
                 </button>
             </div>
             <div className="dropdown-container">
                 <div className="dropdown-wrapper">
                     {/* Schema selection dropdown */}
-                    <select className="dropdown" value={selectedSchema} onChange={(e) => handleSchemaChange(e.target.value)}>
-                        <option value="" disabled>Select Schema</option>
-                        {schemas.map((schema) => (
-                            <option key={schema} value={schema}>{schema}</option>
-                        ))}
-                    </select>
+                    {view === "retrieve" ? (
+                        <select className="dropdown" value={selectedSchema}
+                                onChange={(e) => handleSchemaChange(e.target.value)}>
+                            <option value="" disabled>Select Schema...</option>
+                            {schemas.map((schema) => (
+                                <option key={schema} value={schema}>{schema}</option>
+                            ))}
+                        </select>
+                    ) : (
+                        <select className="dropdown" value={selectedSchema}
+                                onChange={(e) => handleSchemaChange(e.target.value)}>
+                            <option value="" disabled>Select Schema</option>
+                            {token ? <option>Own data</option> : null}
+                        </select>
+                    )}
                     {/* Table selection dropdown */}
                     {selectedSchema && tables.length > 0 && (
-                        <select className="dropdown" value={selectedTable} onChange={(e) => handleTableChange(e.target.value)}>
-                            <option value="" disabled>Select Table</option>
+                        <select className="dropdown" id="table-selection-dropdown" value={selectedTable}
+                                onChange={(e) => handleTableSelection(e.target.value)}>
+                            <option value="">Select Table...</option>
                             {tables.map((table) => (
                                 <option key={table} value={table}>{table}</option>
                             ))}
@@ -217,24 +272,27 @@ const Menu = ({token, updateToken, getToken}) => {
             </div>
             <div className="content">
                 {view === "send" ? (
-                    <div>
-                        {/* Input fields for sending data */}
-                        {columns.map((column, index) => (
-                            <div key={index} className="field-container">
-                                <label>{column}</label>
-                                <input
-                                    type="text"
-                                    placeholder={`Field ${index + 1}`}
-                                    value={sendDataRows[0][column] || ""}
-                                    onChange={(e) => handleChange(0, column, e.target.value)}
-                                />
+                    token === "" ? (
+                            <h2>Please log in to store own data</h2>
+                        ) : (
+                        <div>
+                            {/* Input fields for sending data */}
+                            {columns.map((column, index) => (
+                                <div key={index} className="field-container">
+                                    <label>{column}</label>
+                                    <input
+                                        type="text"
+                                        placeholder={`Field ${index + 1}`}
+                                        value={sendDataRows[0][column] || ""}
+                                        onChange={(e) => handleChange(0, column, e.target.value)}
+                                    />
+                                </div>
+                            ))}
+                            <div className="send-button-container">
+                                {selectedSchema === "Own data" && <button className="send-button" onClick={handleSend}>Send</button>}
                             </div>
-                        ))}
-                        <div className="send-button-container">
-                            {selectedSchema.startsWith('user_own_data') && <button className="send-button" onClick={handleSend}>Send</button>}
                         </div>
-                    </div>
-                ) : (
+                )) : (
                     <div>
                         {/* List of retrieved data */}
                         <ul>
