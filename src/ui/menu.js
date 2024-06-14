@@ -213,35 +213,48 @@ const Menu = ({token, updateToken, getToken}) => {
 
     // Handle sending (user-owned) data to the API
     const handleSend = async () => {
-        for (const row of sendDataRows) {
-            const payload = {};
-            columns.forEach(column => {
-                payload[column] = sendDataRows[0][column] || "";
-            });
-            console.log(payload);
-            try {
-                const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/user-data/tables/${selectedTable}/data`, {
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token,
-
-                    },
-                    body: JSON.stringify(payload)
-                });
-                if (!response.ok) {
-                    throw new Error("Network response was not ok");
-                }
-                console.log("Data sent successfully:", payload);
-            } catch (error) {
-                console.error("Error sending data:", error, payload);
-            }
+        // if destination table not selected, display error & return
+        if (!selectedTable) {
+            window.alert("Please select table to send data to!");
+            return;
         }
+
+        const payload = [];
+        for (const row of sendDataRows) {
+            payload.push({
+                data_point: row.dataPoint,
+                data: row.data,
+                coordinates: row.coordinates
+            });
+        }
+
+        try {
+            const response = await fetch(`https://grnd-3s-133-container-api.agreeabledesert-062868ff.westeurope.azurecontainerapps.io/api/v1/user-data/tables/${selectedTable}/data`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                window.alert("Failed to send data. Data point names must be unique, please check again.");
+                return;
+            } else {
+                window.alert("Successfully saved data to table.");
+            }
+
+            //console.log("Data sent successfully:", payload);
+        } catch (error) {
+            console.error("Error sending data:", error, payload);
+        }
+
         setSendDataRows([{ dataPoint: "", data: "", coordinates: "" }]);
     };
 
     async function handleCreateTable(e) {
-        // TODO
         e.preventDefault();
 
         console.log("Table to be created is: " + createTableName);
@@ -263,7 +276,7 @@ const Menu = ({token, updateToken, getToken}) => {
             });
 
             if (!response.ok) {
-                throw new Error("Network response was not ok");
+                window.alert("Failed to create new table. Please check the name and try again.");
             }
 
             // re-fetch the new table list
@@ -288,7 +301,7 @@ const Menu = ({token, updateToken, getToken}) => {
             });
 
             if (!response.ok) {
-                throw new Error("Network response was not ok");
+                window.alert("Failed to delete table. Please try again.");
             }
 
             // re-fetch the new table list
@@ -315,10 +328,12 @@ const Menu = ({token, updateToken, getToken}) => {
     return (
         <div className="background">
             <div className="menu-header">
-                <button className="header-button" onClick={() => handleViewChange("send")}>
+                <button className={"header-button" + (view === "send" ? " focused-view" : "")}
+                        onClick={() => handleViewChange("send")}>
                     Send
                 </button>
-                <button className="header-button" onClick={() => handleViewChange("retrieve")}>
+                <button className={"header-button" + (view === "retrieve" ? " focused-view" : "")}
+                        onClick={() => handleViewChange("retrieve")}>
                     Retrieve
                 </button>
             </div>
@@ -354,9 +369,9 @@ const Menu = ({token, updateToken, getToken}) => {
 
                 {/* Buttons to create/delete (owned) table */}
                 <div className="send-button-container">
-                    {selectedSchema === "Own data" &&
+                    {view === "send" && selectedSchema === "Own data" &&
                         <button className="table-list-button" onClick={() => {setShowCreateTableModal(true)}}>New table...</button>}
-                    {selectedSchema === "Own data" &&
+                    {view === "send" && selectedSchema === "Own data" &&
                         <button className="table-list-button" onClick={() => setShowDeleteTableModal(true)}>Delete table...</button>}
                 </div>
             </div>
@@ -368,17 +383,52 @@ const Menu = ({token, updateToken, getToken}) => {
                     ) : (
                         <div>
                             {/* Input fields for sending data */}
-                            {columns.map((column, index) => (
-                                <div key={index} className="field-container">
-                                    <label>{column}</label>
-                                    <input
-                                        type="text"
-                                        placeholder={`Field ${index + 1}`}
-                                        value={sendDataRows[0][column] || ""}
-                                        onChange={(e) => handleChange(0, column, e.target.value)}
-                                    />
-                                </div>
-                            ))}
+                            <table>
+                                <thead>
+                                <tr>
+                                    <th>Data point</th>
+                                    <th>Data</th>
+                                    <th>Coordinates</th>
+                                    <th>Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {sendDataRows.map((row, index) => (
+                                    <tr key={index}>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                placeholder={"Deventer"}
+                                                value={row.dataPoint}
+                                                onChange={(e) => handleChange(index, "dataPoint", e.target.value)}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                placeholder={"Dark soil"}
+                                                value={row.data}
+                                                onChange={(e) => handleChange(index, "data", e.target.value)}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                placeholder={"40.7128° N, 74.0060° W"}
+                                                value={row.coordinates}
+                                                onChange={(e) => handleChange(index, "coordinates", e.target.value)}
+                                            />
+                                        </td>
+                                        <td>
+                                            <button onClick={() => handleAddRow()}>+</button>
+                                            {sendDataRows.length > 1 && (
+                                                <button onClick={() => handleRemoveRow(index)}>-</button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
                             <div className="send-button-container">
                                 {selectedSchema === "Own data" && <button className="send-button" onClick={handleSend}>Send</button>}
                             </div>
@@ -410,12 +460,12 @@ const Menu = ({token, updateToken, getToken}) => {
                 )}
             </div>
 
-            {/* Create/delete table modals */}
+            {/* Create/delete table prompt modals */}
             <Modal show={showCreateTableModal} onClose={() => setShowCreateTableModal(false)}>
                 <form onSubmit={handleCreateTable}>
                     <label>
                         Name:
-                        <input onChange={handleCreateTableChange} required type="text"/>
+                        <input placeholder={"Table name..."} onChange={handleCreateTableChange} required type="text"/>
                     </label>
                     {createTableName && <button type="submit" value="Submit" className="send-button">Submit</button>}
                 </form>
