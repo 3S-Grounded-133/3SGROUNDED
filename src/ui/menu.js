@@ -1,11 +1,10 @@
 // Import necessary React hooks and styles
 import React, { useState, useEffect } from "react";
 import "./menu.css";
-import {getValue} from "@testing-library/user-event/dist/utils";
 import Modal from "./Modal";
 
 // Define the Menu component
-const Menu = ({token, updateToken, getToken}) => {
+const Menu = ({token}) => {
     // State variables for managing views, data, and selection
     const [view, setView] = useState("send");
     const [sendDataRows, setSendDataRows] = useState([{ dataPoint: "", data: "", coordinates: "" }]);
@@ -31,9 +30,7 @@ const Menu = ({token, updateToken, getToken}) => {
     }, []);
 
     // Fetch the own data schema when the user is logged in & remove the schema when the user is logged out
-
     useEffect(() => {
-        console.log("token changed. Value is: " + token);
         if (token) {
             setSchemas(schemas => [...schemas, "Own data"]);
         } else {
@@ -114,7 +111,6 @@ const Menu = ({token, updateToken, getToken}) => {
         }
 
         setSelectedSchema(schema);
-        console.log("New schema detected: " + schema);
         setTables([]); // Reset tables when a new schema is selected
         try {
             let response;
@@ -163,8 +159,6 @@ const Menu = ({token, updateToken, getToken}) => {
                             'Authorization': 'Bearer ' + token,
                         },
                     });
-
-                    console.log("Token to get own data: " + token);
                 }
                 if (!response.ok) {
                     throw new Error("Network response was not ok");
@@ -245,8 +239,6 @@ const Menu = ({token, updateToken, getToken}) => {
             } else {
                 window.alert("Successfully saved data to table.");
             }
-
-            //console.log("Data sent successfully:", payload);
         } catch (error) {
             console.error("Error sending data:", error, payload);
         }
@@ -256,8 +248,6 @@ const Menu = ({token, updateToken, getToken}) => {
 
     async function handleCreateTable(e) {
         e.preventDefault();
-
-        console.log("Table to be created is: " + createTableName);
 
         const body = {
             "table_name": createTableName,
@@ -368,12 +358,12 @@ const Menu = ({token, updateToken, getToken}) => {
                 </div>
 
                 {/* Buttons to create/delete (owned) table */}
-                <div className="send-button-container">
-                    {view === "send" && selectedSchema === "Own data" &&
-                        <button className="table-list-button" onClick={() => {setShowCreateTableModal(true)}}>New table...</button>}
-                    {view === "send" && selectedSchema === "Own data" &&
-                        <button className="table-list-button" onClick={() => setShowDeleteTableModal(true)}>Delete table...</button>}
-                </div>
+                {view === "send" && selectedSchema === "Own data" &&
+                    <div className={"send-button-container"}>
+                        <button className="table-list-button" onClick={() => {setShowCreateTableModal(true)}}>New table...</button>
+                        <button className="table-list-button" onClick={() => setShowDeleteTableModal(true)}>Delete table...</button>
+                    </div>
+                }
             </div>
 
             <div className="content">

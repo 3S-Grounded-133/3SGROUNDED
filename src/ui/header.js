@@ -1,9 +1,8 @@
 // Import necessary React hooks and styles
-import React, {useContext, useState} from 'react';
+import React, {useState} from 'react';
 import './header.css';
 
 // Import other components and images
-import LayerDropdown from "./layerdropdown";
 import aerius from '../images/aerius-calculator.png'; // Adjust the path as necessary
 
 // Define the Header component
@@ -12,7 +11,6 @@ const Header = ({ toggleModal, token, updateToken }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loggedInUsername, setLoggedInUsername] = useState('');
-
 
     // Handle input change event
     const handleInputChange = (e) => {
@@ -26,9 +24,7 @@ const Header = ({ toggleModal, token, updateToken }) => {
     };
 
     // Handle login button click event
-    async function handleLogin(e) {
-        //e.preventDefault();
-
+    async function handleLogin() {
         let loginDetails = {
             'username': username,
             'password': password,
@@ -54,18 +50,12 @@ const Header = ({ toggleModal, token, updateToken }) => {
 
         // Check the response and log the result
         if (response.ok) {
-            console.log('Login successful');
-            console.log(responseBody);
-            console.log("access_token " + responseBody.access_token);
             const newToken = responseBody.access_token;
             await updateToken('');
             await updateToken(newToken);
 
-            //await new Promise(r => setTimeout(r, 1000));
-            console.log('Token after update in handleLogin is: ' + token);
-
         } else {
-            console.log('Login failed');
+            window.alert('Login failed. Please try again.');
             setLoggedInUsername('');
         }
         // Reset username and password fields
@@ -79,9 +69,9 @@ const Header = ({ toggleModal, token, updateToken }) => {
         let registrationDetails = {
             'email': username,
             'password': password,
-            'first_name': "First Name",
-            'last_name': "Last Name",
-            'phone_number': "0123456789",
+            'first_name': "",
+            'last_name': "",
+            'phone_number': "",
         }
 
         // Make a POST request to the register endpoint
@@ -96,10 +86,9 @@ const Header = ({ toggleModal, token, updateToken }) => {
 
         // Check the response and log the result
         if (response.ok) {
-            console.log('Registration successful');
+            window.alert('Registration successful. You can now log in.');
         } else {
-            console.log('Registration failed');
-            console.log(response);
+            window.alert('Registration failed. Please try again.');
         }
         // Reset username and password fields
         setUsername('');

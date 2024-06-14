@@ -1,5 +1,5 @@
 // Import necessary React hooks and styles
-import React, {useContext, useState} from 'react';
+import React, {useState} from 'react';
 import './App.css';
 
 // Import UI components
@@ -47,18 +47,9 @@ function App() {
     };
 
     // Function to update token
-    // STATE VALUES WILL ALWAYS LAG BY 1 STATE
     function updateToken (newToken) {
-        //console.log('updateToken called with value: ' + newToken); // test
         setToken(token => newToken);
-        //console.log('token value in App is: ' + token);
     }
-
-    function getToken() {
-        return token;
-    }
-
-    //updateToken('firstRender');
 
     // Render the main structure of the app
     return (
